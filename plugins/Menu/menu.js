@@ -342,7 +342,7 @@ let links = [
  //"https://telegra.ph/file/14a799685616320beea2f.jpg",
  //"https://telegra.ph/file/2bda43bf50a2d62f3c55b.jpg",
  ];
-  ];
+
   
   const contextInfo = {
   forwardingScore: 1,
