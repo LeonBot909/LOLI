@@ -272,7 +272,7 @@ if(!q){
 } else {
 
 // Fungsi untuk menampilkan semua nama file tanpa ekstensi dalam sebuah folder
-function displayFilesByFolder(folderPath, excludedFolders = [], premium = [], limit = [], error = [], bloked = [
+function displayFilesByFolder(folderPath, excludedFolders = [], premium = [], limit = [], error = [], bloked = [], isLast = false) {
   let result = ''; // Inisialisasi string kosong
 
   const files = fs.readdirSync(folderPath);
@@ -288,9 +288,9 @@ function displayFilesByFolder(folderPath, excludedFolders = [], premium = [], li
       if (isDirectory && folderName.toLowerCase() == q) { //!excludedFolders.includes(folderName)
         
       
-          result += `▧──···「 *${transformText2(folderName)}* 」···──▧\n\n`; // Tambahkan nama folder ke string 
+          result += `▧──···「 *${transformText2(folderName)}* 」···──▧\n\n`; // Tambahkan nama folder ke string result
           const isSubLast = index === files.length - 1 && isLast;
-          result += displayFilesByFolder(filePath, excludedFolders, premium, limit, error, bloked, isSubLast); /
+          result += displayFilesByFolder(filePath, excludedFolders, premium, limit, error, bloked, isSubLast); // Rekursif untuk folder dalam folder
       } else if (!isDirectory) {
           let marker = '';
           if (premium.includes(fileNameWithoutExtension)) {
@@ -325,7 +325,7 @@ function displayFilesByFolder(folderPath, excludedFolders = [], premium = [], li
 //const pluginsFolderPath = './plugins';
 
 // Daftar folder yang ingin dikecualikan dari tampilan console
-//const excludedFolders = ['Bot-function', 'Game-answer', 'Game-hint']; // Ganti dengan daftar folder yang ingin
+//const excludedFolders = ['Bot-function', 'Game-answer', 'Game-hint']; // Ganti dengan daftar folder yang ingin dikecualikan
 
 // Daftar file premium, limit, error, dan bloked
 const premiumFiles = db.data.data.filter(item => item.name === 'premium')[0].id;
@@ -334,7 +334,7 @@ const errorFiles = db.data.listerror.map(item => item.cmd);
 const blokedFiles = db.data.blockcmd.map(item => item.cmd);
 
 // Memanggil fungsi untuk menampilkan nama file tanpa ekstensi berdasarkan folder
-const outputString = displayFilesByFolder(pluginsFolderPath, excludedFolders, premiumFiles, limitFiles, errorFil
+const outputString = displayFilesByFolder(pluginsFolderPath, excludedFolders, premiumFiles, limitFiles, errorFiles, blokedFiles, true);
 
 let links = [
   "https://telegra.ph/file/c36c696f34533a7ddbced.jpg",
