@@ -338,9 +338,10 @@ const outputString = displayFilesByFolder(pluginsFolderPath, excludedFolders, pr
 
 let links = [
   "https://telegra.ph/file/c36c696f34533a7ddbced.jpg",
-  /    //"https://telegra.ph/file/951967f8f193c97dbdc5e.jpg",",
-  /    //"https://telegra.ph/file/14a799685616320beea2f.jpg",",
-  /    //"https://telegra.ph/file/2bda43bf50a2d62f3c55b.jpg",
+ //"https://telegra.ph/file/951967f8f193c97dbdc5e.jpg",
+ //"https://telegra.ph/file/14a799685616320beea2f.jpg",
+ //"https://telegra.ph/file/2bda43bf50a2d62f3c55b.jpg",
+ ];
   ];
   
   const contextInfo = {
