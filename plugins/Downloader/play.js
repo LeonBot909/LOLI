@@ -1,66 +1,141 @@
-import yts from 'yt-search';
-import fs from 'fs';
-import { pipeline } from 'stream';
-import { promisify } from 'util';
-import os from 'os';
-import axios from 'axios';
+import fetch from "node-fetch"
+import fs from 'fs-extra'
+import {FileSize,h2k} from "../../lib/myfunc.js"
+import yts from "yt-search"
+import ytdl from 'ytdl-core'
 
-const streamPipeline = promisify(pipeline);
+let handler = async (m, {q,conn,args,usedPrefix,setReply,command}) => {
 
-var handler = async (m, { conn, command, text, usedPrefix }) => {
-  if (!text) throw `Gunakan contoh ${usedPrefix}${command} naruto blue bird`;
+  const agent = ytdl.createAgent(JSON.parse(fs.readFileSync("./database/cookies.json")));
 
-  await conn.reply(m.chat, "_「P R O C E S S 」_\n Sedang mencari dan mengunduh audio...", m);
+//DOWNLOAD MP4
+const downloadMp4 = async (Link ) => {
+try{
+await ytdl.getInfo(Link, { agent });
+let mp4File = getRandomFile('.mp4')
+let nana = ytdl(Link)
+.pipe(fs.createWriteStream(mp4File))
+.on("finish", async () => {
+await conn.sendMessage(m.chat, { video: fs.readFileSync(mp4File), caption: "Nih!",gifPlayback: false},{quoted: m})
+fs.unlinkSync(`./${mp4File}`)
+})
+} catch(err) {
+    Log(err)
+setReply(`${err}`)
+}
+}
 
-  let search = await yts(text);
-  let vid = search.videos[0];
-  if (!search) throw 'Video tidak ditemukan, coba judul lain';
-  let { title, thumbnail, timestamp, views, ago, url } = vid;
-  let wm2 = 'Play 🎵';
 
-  const response = await axios.get(`https://widipe.com/download/ytdl?url=${encodeURIComponent(url)}`);
-  const mp3Url = response.data.result.mp3;
+//DOWNLOAD MP3
+const downloadMp3 = async (Link ,name = "Audio", opt = "audio") => {
+try{
+await ytdl.getInfo(Link, { agent });
+let mp3File = name == "Audio"? getRandomFile('.mp3') : name
+ytdl(Link, {filter: 'audioonly'})
+.pipe(fs.createWriteStream(mp3File))
+.on("finish", async () => {
+  Log(opt)
+if(opt == "audio") await conn.sendMessage(m.chat, {audio:  fs.readFileSync(mp3File), mimetype: 'audio/mp4' },{ quoted: m })
+if(opt == "doc") await conn.sendMessage(m.chat, { document: fs.readFileSync(mp3File), fileName: name+'.mp3', mimetype: 'audio/mp4'  }, { quoted: m })
+fs.unlinkSync(mp3File)
+})
+} catch (err){
+console.log(err)
+}
+}
 
-  const audioResponse = await axios.get(mp3Url, { responseType: 'stream' });
 
-  const tmpDir = os.tmpdir();
-  const audioFilePath = `${tmpDir}/${title}.mp3`;
-  const writableStream = fs.createWriteStream(audioFilePath);
 
-  await streamPipeline(audioResponse.data, writableStream);
 
-  let audioMessage = {
-    audio: {
-      url: audioFilePath
-    },
-    mimetype: 'audio/mp4',
-    fileName: `${title}`,
-    contextInfo: {
-      externalAdReply: {
-        showAdAttribution: true,
-        mediaType: 2,
-        mediaUrl: url,
-        title: title,
-        body: wm2,
-        sourceUrl: url,
-        thumbnailUrl: thumbnail
-      }
-    }
-  };
 
-  await conn.sendMessage(m.chat, audioMessage, { quoted: m });
 
-  fs.unlink(audioFilePath, (err) => {
-    if (err) {
-      console.error(`Gagal menghapus file audio: ${err}`);
-    } else {
-      console.log(`File audio dihapus: ${audioFilePath}`);
-    }
-  });
-};
+if(!q) return setReply("Teksnya mana om")
+m.reply(mess.wait)
+let opt = q.endsWith("-doc")? "doc": q.endsWith("-mp4")? "mp4":"audio"
+let withLink = q.startsWith('https://')
+let query = q.replace("-doc","").replace("-mp4","")
+if(!withLink){
+let rus = await yts(query) 
+if(rus.all.length == "0") return setReply("Video tidak bisa di download")
+let data = await rus.all.filter(v => v.type == 'video')
+var res = data[0] || data[1]	
+}
+let info = withLink? await ytdl.getInfo(query, { agent }) : await ytdl.getInfo(res.url, { agent });
+let teks = withLink? query:res.url
 
-handler.help = ['play'].map((v) => v + ' <query>');
-handler.tags = ['downloader'];
-handler.command = /^(play)$/i;
+if(opt == 'doc' || opt == 'audio'){
+var size = await ytdl.filterFormats(info.formats, 'audioonly');
+} else if(opt == 'mp4'){
+var size = await ytdl.chooseFormat(info.formats, { quality: '18' });
+}
 
-export default handler;
+try{
+var lown = opt == 'mp4'? size.contentLength : size[0].contentLength
+}catch{
+var lown = opt == 'mp4'? size.contentLength : size[2].contentLength
+}
+if(Number(lown) > 50000000 ) return setReply(`Bjir sizenya ${FileSize(lown)}\nAu ah ga mao download 😤`)
+
+let data1 = info.videoDetails
+let judul = data1.title
+let durasi = data1.lengthSeconds
+let views = data1.viewCount
+let channel = data1.ownerChannelName
+let thumb = data1.thumbnails.pop().url
+
+let toks =`*Playing now*
+
+💾 *File:* ↓
+• Judul : ${judul.substr(0,31)+'...'}
+• Ditonton : ${h2k(views)} Kali
+• Durasi : ${durasi > 60? (durasi/60).toFixed(1) : durasi} menit
+• Channel : ${channel}
+• Size : ${FileSize(lown)}
+
+📮 *Note:* ↓
+• Tambahkan -doc di bagian akhir 
+  untuk mengirim file dalam bentuk dokumen
+• Tambahkan -mp4 di bagian akhir 
+  untuk mengirim file dalam bentuk vidio
+`
+conn.sendAdReply(m.chat, transformText(toks), judul, channel, thumb)
+if(opt == "audio") downloadMp3(teks)
+if(opt == "doc") downloadMp3(teks,judul,"doc")
+if(opt == 'mp4') downloadMp4(teks)
+
+
+
+
+
+}
+handler.help = ["downloader"]
+handler.tags = ["internet"];
+handler.command = ['play3']
+
+export default handler
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
