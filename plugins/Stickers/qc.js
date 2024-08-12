@@ -1,7 +1,13 @@
 import axios from "axios"
 import fs from 'fs-extra'
 import { exec, spawn } from "child_process";
-import {  TelegraPh  } from '../../lib/uploader.js'
+var randomColor = ['#ef1a11', '#89cff0', '#660000', '#87a96b', '#e9f6ff', '#ffe7f7', '#ca86b0', '#83a3ee', '#abcc88', '#80bd76', '#6a84bd', '#5d8d7f', '#530101', '#863434', '#013337', '#133700', '#2f3641', '#cc4291', '#7c4848', '#8a496b', '#722f37', '#0fc163', '#2f3641', '#e7a6cb', '#64c987', '#e6e6fa'];
+  const apiColor = randomColor[Math.floor(Math.random() * randomColor.length)];
+
+const { FileIo, FileUgu, TelegraPh, AnonFiles, FileDitch, PomF2, Top4top } =
+  await import(`../../lib/uploader.js?v=${Date.now()}`).catch((err) =>
+    console.log(err)
+  );
 let handler = async (m, { q, conn, args, setReply, prefix, command }) => {
   const isImage = m.type === "imageMessage";
   const isQuotedImage =
@@ -20,7 +26,7 @@ let handler = async (m, { q, conn, args, setReply, prefix, command }) => {
       const json = {
         type: "quote",
         format: "png",
-        backgroundColor:  "#FFFFFF",
+        backgroundColor: "apiColor",
         width: 512,
         height: 768,
         scale: 2,
@@ -41,7 +47,7 @@ let handler = async (m, { q, conn, args, setReply, prefix, command }) => {
           replyMessage: {}
         }]
       };
-      const { data } = await axios.post("https://bot.lyo.su/quote/generate", json, {
+      const { data } = await axios.post("https://quotly.netorare.codes/generate", json, {
         headers: {
           "Content-Type": "application/json"
         }
@@ -60,7 +66,7 @@ let handler = async (m, { q, conn, args, setReply, prefix, command }) => {
         const json = {
           type: "quote",
           format: "png",
-          backgroundColor:  "#FFFFFF",
+          backgroundColor:  "apiColor",
           width: 512,
           height: 768,
           scale: 2,
@@ -81,7 +87,7 @@ let handler = async (m, { q, conn, args, setReply, prefix, command }) => {
             replyMessage: {}
           }]
         };
-        const { data } = await axios.post("https://bot.lyo.su/quote/generate", json, {
+        const { data } = await axios.post("https://quotly.netorare.codes/generate", json, {
           headers: {
             "Content-Type": "application/json"
           }
@@ -95,7 +101,7 @@ let handler = async (m, { q, conn, args, setReply, prefix, command }) => {
       const json = {
         type: "quote",
         format: "png",
-        backgroundColor:  "#FFFFFF",
+        backgroundColor:  "apiColor",
         width: 512,
         height: 768,
         scale: 2,
@@ -113,12 +119,12 @@ let handler = async (m, { q, conn, args, setReply, prefix, command }) => {
           replyMessage: {}
         }]
       };
-      const { data } = await axios.post("https://bot.lyo.su/quote/generate", json, {
+      const { data } = await axios.post("https://quotly.netorare.codes/generate", json, {
         headers: {
           "Content-Type": "application/json"
         }
       }).catch(e => e.response || {});
-      if (!data.ok) reply(data);
+      if (!data.ok) m.reply(data);
       const buffer = Buffer.from(data.result.image, "base64");
       conn.toSticker(m.chat, buffer, m)
       /*
