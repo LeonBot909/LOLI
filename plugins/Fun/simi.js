@@ -27,7 +27,7 @@
 
           async function getMessage(yourMessage, langCode) {
             const res = await axios.post(
-              "https://api.simsimi.vn/v2/simtalk",
+              "https://api.agatz.xyz/api/simsimi?message=",
               new URLSearchParams({
                 text: yourMessage,
                 lc: langCode,
