@@ -43,6 +43,6 @@ let handler = async (m, { q, conn, args, usedPrefix, setReply, command }) => {
 };
 handler.help = ["downloader"];
 handler.tags = ["internet"];
-handler.command = ["play"];
+handler.command = ["play3"];
 
 export default handler;
