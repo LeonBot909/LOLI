@@ -5,11 +5,28 @@ import yts from "yt-search"
 import ytdl from 'ytdl-core'
 
 let handler = async (m, {q,conn,args,usedPrefix,setReply,command}) => {
+// (Optional) http-cookie-agent / undici agent options
+// Below are examples, NOT the recommended options
+const agentOptions = {
+  pipelining: 5,
+  maxRedirections: 0,
+  localAddress: "127.0.0.1",
+};
+
 
   const agent = ytdl.createAgent(JSON.parse(fs.readFileSync("./database/cookies.json")));
 
 //DOWNLOAD MP4
 const downloadMp4 = async (Link ) => {
+
+
+  let url = `https://api.cafirexos.com/api/v2/ytmp4?url=${Link}`
+
+  await conn.sendMessage(m.from, { video: { url } }, { quoted: m });
+
+
+
+/*
 try{
 await ytdl.getInfo(Link, { agent });
 let mp4File = getRandomFile('.mp4')
@@ -23,11 +40,19 @@ fs.unlinkSync(`./${mp4File}`)
     Log(err)
 setReply(`${err}`)
 }
+*/
 }
 
 
 //DOWNLOAD MP3
 const downloadMp3 = async (Link ,name = "Audio", opt = "audio") => {
+
+  let url = `https://api.cafirexos.com/api/v2/ytmp3?url=${Link}`
+
+  await conn.sendMessage(m.from, { audio: { url }, mimetype: 'audio/mpeg', fileName: 'audio.mp3' }, { quoted: m });
+
+
+/*
 try{
 await ytdl.getInfo(Link, { agent });
 let mp3File = name == "Audio"? getRandomFile('.mp3') : name
@@ -42,6 +67,7 @@ fs.unlinkSync(mp3File)
 } catch (err){
 console.log(err)
 }
+*/
 }
 
 
@@ -110,7 +136,7 @@ if(opt == 'mp4') downloadMp4(teks)
 }
 handler.help = ["downloader"]
 handler.tags = ["internet"];
-handler.command = ['play']
+handler.command = ['play3']
 
 export default handler
 
