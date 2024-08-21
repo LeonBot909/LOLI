@@ -136,7 +136,7 @@ if(opt == 'mp4') downloadMp4(teks)
 }
 handler.help = ["downloader"]
 handler.tags = ["internet"];
-handler.command = ['play']
+handler.command = ['play3']
 
 export default handler
 
