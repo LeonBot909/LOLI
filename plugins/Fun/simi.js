@@ -20,3 +20,9 @@ async function sendMessageToSimSimi(message) {
         console.error('There was a problem with the fetch operation:', error);
     }
 }
+handler.help = ["simi"];
+          handler.tags = ["fun"];
+          handler.command = /^(simi)$/i;
+          handler.onlyprem = true;
+          handler.limit = true;
+          export default handler;
