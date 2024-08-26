@@ -1,167 +1,48 @@
-import fetch from "node-fetch"
-import fs from 'fs-extra'
-import {FileSize,h2k} from "../../lib/myfunc.js"
-import yts from "yt-search"
-import ytdl from 'ytdl-core'
-
-let handler = async (m, {q,conn,args,usedPrefix,setReply,command}) => {
-// (Optional) http-cookie-agent / undici agent options
-// Below are examples, NOT the recommended options
-const agentOptions = {
-  pipelining: 5,
-  maxRedirections: 0,
-  localAddress: "127.0.0.1",
+import xyz from "@xyzteams/scapers";
+let handler = async (m, { q, conn, args, usedPrefix, setReply, command }) => {
+  const a = await xyz.download.youtube.search(q).then(async (res) => {
+    if (!res) throw "No results found";
+    let data = await res[0];
+    if (data.duration.seconds > 600) throw "Max duration is 10 minutes";
+    await conn.sendMessage(
+      m.chat,
+      {
+        text: `Title: ${data.title}\nDuration: ${
+          data.duration.timestamp
+        }\nDate Uploaded: ${
+          data.publish ? data.publish : "Not known"
+        }\nViews: ${data.views}\nThumbnail: ${
+          data.thumbnail
+        }\n\n\nDownloading...,`,
+        contextInfo: {
+          externalAdReply: {
+            title: "Play Audio",
+            body: "wm",
+            thumbnailUrl: data.thumbnail,
+            sourceUrl: null,
+            mediaType: 1,
+            renderLargerThumbnail: true,
+          },
+        },
+      },
+      { quoted: m }
+    );
+    return data.url;
+  });
+  await xyz.download.youtube.ytmp3(a).then(async (res) => {
+    if (!res.url) throw "No results found";
+    await conn.sendMessage(
+      m.chat,
+      {
+        audio: { url: res.url },
+        mimetype: "audio/mp4",
+      },
+      { quoted: m }
+    );
+  });
 };
-
-
-  const agent = ytdl.createAgent(JSON.parse(fs.readFileSync("./database/cookies.json")));
-
-//DOWNLOAD MP4
-const downloadMp4 = async (Link ) => {
-
-
-  let url = `https://api.cafirexos.com/api/v2/ytmp4?url=${Link}`
-
-  await conn.sendMessage(m.from, { video: { url } }, { quoted: m });
-
-
-
-/*
-try{
-await ytdl.getInfo(Link, { agent });
-let mp4File = getRandomFile('.mp4')
-let nana = ytdl(Link)
-.pipe(fs.createWriteStream(mp4File))
-.on("finish", async () => {
-await conn.sendMessage(m.chat, { video: fs.readFileSync(mp4File), caption: "Nih!",gifPlayback: false},{quoted: m})
-fs.unlinkSync(`./${mp4File}`)
-})
-} catch(err) {
-    Log(err)
-setReply(`${err}`)
-}
-*/
-}
-
-
-//DOWNLOAD MP3
-const downloadMp3 = async (Link ,name = "Audio", opt = "audio") => {
-
-  let url = `https://api.cafirexos.com/api/v2/ytmp3?url=${Link}`
-
-  await conn.sendMessage(m.from, { audio: { url }, mimetype: 'audio/mpeg', fileName: 'audio.mp3' }, { quoted: m });
-
-
-/*
-try{
-await ytdl.getInfo(Link, { agent });
-let mp3File = name == "Audio"? getRandomFile('.mp3') : name
-ytdl(Link, {filter: 'audioonly'})
-.pipe(fs.createWriteStream(mp3File))
-.on("finish", async () => {
-  Log(opt)
-if(opt == "audio") await conn.sendMessage(m.chat, {audio:  fs.readFileSync(mp3File), mimetype: 'audio/mp4' },{ quoted: m })
-if(opt == "doc") await conn.sendMessage(m.chat, { document: fs.readFileSync(mp3File), fileName: name+'.mp3', mimetype: 'audio/mp4'  }, { quoted: m })
-fs.unlinkSync(mp3File)
-})
-} catch (err){
-console.log(err)
-}
-*/
-}
-
-
-
-
-
-
-if(!q) return setReply("Teksnya mana om")
-m.reply(mess.wait)
-let opt = q.endsWith("-doc")? "doc": q.endsWith("-mp4")? "mp4":"audio"
-let withLink = q.startsWith('https://')
-let query = q.replace("-doc","").replace("-mp4","")
-if(!withLink){
-let rus = await yts(query) 
-if(rus.all.length == "0") return setReply("Video tidak bisa di download")
-let data = await rus.all.filter(v => v.type == 'video')
-var res = data[0] || data[1]	
-}
-let info = withLink? await ytdl.getInfo(query, { agent }) : await ytdl.getInfo(res.url, { agent });
-let teks = withLink? query:res.url
-
-if(opt == 'doc' || opt == 'audio'){
-var size = await ytdl.filterFormats(info.formats, 'audioonly');
-} else if(opt == 'mp4'){
-var size = await ytdl.chooseFormat(info.formats, { quality: '18' });
-}
-
-try{
-var lown = opt == 'mp4'? size.contentLength : size[0].contentLength
-}catch{
-var lown = opt == 'mp4'? size.contentLength : size[2].contentLength
-}
-if(Number(lown) > 50000000 ) return setReply(`Bjir sizenya ${FileSize(lown)}\nAu ah ga mao download 😤`)
-
-let data1 = info.videoDetails
-let judul = data1.title
-let durasi = data1.lengthSeconds
-let views = data1.viewCount
-let channel = data1.ownerChannelName
-let thumb = data1.thumbnails.pop().url
-
-let toks =`*Playing now*
-
-💾 *File:* ↓
-• Judul : ${judul.substr(0,31)+'...'}
-• Ditonton : ${h2k(views)} Kali
-• Durasi : ${durasi > 60? (durasi/60).toFixed(1) : durasi} menit
-• Channel : ${channel}
-• Size : ${FileSize(lown)}
-
-📮 *Note:* ↓
-• Tambahkan -doc di bagian akhir 
-  untuk mengirim file dalam bentuk dokumen
-• Tambahkan -mp4 di bagian akhir 
-  untuk mengirim file dalam bentuk vidio
-`
-conn.sendAdReply(m.chat, transformText(toks), judul, channel, thumb)
-if(opt == "audio") downloadMp3(teks)
-if(opt == "doc") downloadMp3(teks,judul,"doc")
-if(opt == 'mp4') downloadMp4(teks)
-
-
-
-
-
-}
-handler.help = ["downloader"]
+handler.help = ["downloader"];
 handler.tags = ["internet"];
-handler.command = ['play3']
+handler.command = ["play"];
 
-export default handler
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+export default handler;
